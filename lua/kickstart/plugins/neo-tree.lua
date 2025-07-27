@@ -15,6 +15,13 @@ return {
   },
   opts = {
     filesystem = {
+      filtered_items = {
+        hide_dotfiles = false,
+        hide_hidden = false,
+        always_show_by_pattern = {
+          '.env*',
+        },
+      },
       window = {
         mappings = {
           ['\\'] = 'close_window',

@@ -59,6 +59,7 @@ return {
       --    That is to say, every time a new file is opened that is associated with
       --    an lsp (for example, opening `main.rs` is associated with `rust_analyzer`) this
       --    function will be executed to configure the current buffer
+      -- Automatically set up LSP servers installed via mason-lspconfig
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
         callback = function(event)
@@ -210,7 +211,7 @@ return {
       local servers = {
         -- clangd = {},
         -- gopls = {},
-        -- pyright = {},
+        -- pyright
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
@@ -220,7 +221,47 @@ return {
         -- But for many setups, the LSP (`ts_ls`) will work just fine
         -- ts_ls = {},
         --
-
+        basedpyright = {
+          --          settings = {
+          basedpyright = {
+            analysis = {
+              typeCheckingMode = 'basic',
+              stubPath = '~/.config/nvim/stubs',
+              diagnosticMode = 'workspace', -- Better for Django projects
+              useLibraryCodeForTypes = true,
+              -- autoSearchPaths = true,
+              -- diagnosticMode = 'openFilesOnly',
+              -- useLibraryCodeForTypes = true,
+              -- enableReachabilityAnalysis = false,
+            },
+          },
+          --         },
+        },
+        ['django-template-lsp'] = {
+          cmd = { 'djlsp' }, -- or full path like "/path/to/djlsp"
+          filetypes = { 'python', 'django', 'htmldjango' },
+          init_options = {
+            -- Dynamically detect Django settings module (see options below)
+            django_settings_module = function()
+              local root = vim.fn.getcwd()
+              -- Check common project structures
+              if vim.fn.glob(root .. '/portal/settings.py') ~= '' then
+                return 'portal.settings'
+              elseif vim.fn.glob(root .. '/cronos/settings.py') ~= '' then
+                return 'cronos.settings'
+              else
+                return root:match '([^/]+)$' .. 'settings' -- Fallback
+              end
+            end,
+            docker_compose_file = 'docker-compose.yml',
+            docker_compose_service = 'django',
+          },
+          -- Optional: Custom on_attach for Django-specific keymaps
+          on_attach = function(client, bufnr)
+            -- Example: Django-specific keybindings
+            vim.keymap.set('n', '<leader>dm', ':!python manage.py ', { buffer = bufnr, desc = 'Django: Run manage.py command' })
+          end,
+        },
         lua_ls = {
           -- cmd = { ... },
           -- filetypes = { ... },
